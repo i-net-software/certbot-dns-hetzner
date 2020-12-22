@@ -63,7 +63,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    "\n".join([record_value, validation]),
+                    "\\n".join([record_value, validation]),
                     TTL
                 )
 
@@ -71,7 +71,6 @@ class Authenticator(dns_common.DNSAuthenticator):
                     _RecordNotFoundException
             ) as exception:
                 # this is Ok - there is no record yet.
-
                 client.add_record(
                     domain,
                     "TXT",
@@ -108,7 +107,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    "\n".join(record_values),
+                    "\\n".join(record_values),
                     TTL
                 )
 
