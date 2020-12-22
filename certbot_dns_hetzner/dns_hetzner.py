@@ -93,8 +93,13 @@ class Authenticator(dns_common.DNSAuthenticator):
         try:
             # check if a record exists with multiple entries - and if so downgrade it, removeing the current value
             zone_id = client.get_zone_id_by_domain(domain)
-            record_id = client.get_record_id_by_name(zone_id, formated_name)
-            record_values = client.get_record_value_by_name(zone_id, formated_name).split("\n")
+
+            try:
+                record_id = client.get_record_id_by_name(zone_id, formated_name)
+                record_values = client.get_record_value_by_name(zone_id, formated_name).split("\n")
+            except (_RecordNotFoundException) as exception:
+                # this one may be ok ... we do want it removed
+                return
 
             if validation in record_values:
                 record_values.remove(validation)
