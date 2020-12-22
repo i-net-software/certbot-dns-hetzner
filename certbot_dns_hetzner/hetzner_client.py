@@ -127,7 +127,7 @@ class _HetznerClient:
             "name": name,
             "zone_id": zone_id
         })
-        create_record_response = requests.post(
+        create_record_response = requests.put(
             url="{0}/records/{1}".format(HETZNER_API_ENDPOINT, record_id),
             headers=self._headers,
             data=record_data
