@@ -63,7 +63,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    "\\n".join([record_value, validation]),
+                    " ".join([record_value, validation]),
                     TTL
                 )
 
@@ -112,7 +112,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    "\\n".join(record_values),
+                    " ".join(record_values),
                     TTL
                 )
 
