@@ -102,6 +102,47 @@ class _HetznerClient:
         except (ValueError, UnicodeDecodeError) as exception:
             raise _MalformedResponseException(exception)
 
+    def update_record(self, domain, record_id, record_type, name, value, ttl):  # pylint: disable=too-many-arguments
+        """
+        API call to update a record with the id `record_id` in the zone matching ``domain`` to your Hetzner Account, while specifying ``record_type``,
+        ``name``, ``value`` and ``ttl``
+        :param domain: Domain to determine zone where record should be added
+        :param record_id: The ID of the the record to update
+        :param record_type: A valid DNS record type
+        :param name: Full record name
+        :param value: Record value
+        :param ttl: Time to live
+        :raises ._MalformedResponseException: If the response is missing expected values or is invalid JSON
+        :raises ._ZoneNotFoundException: If no zone with the SLD and TLD of ``domain`` is found in your Hetzner account
+        :raises ._NotAuthorizedException: If Hetzner does not accept the authorization credentials
+        :raises ._UnprocessableEntityException: If the request is valid but still cannot be processed. e.g.
+                                                if it's committed to the wrong zone
+        :raises requests.exceptions.ConnectionError: If the API request fails
+        """
+        zone_id = self.get_zone_id_by_domain(domain)
+        record_data = json.dumps({
+            "value": value,
+            "ttl": ttl,
+            "type": record_type,
+            "name": name,
+            "zone_id": zone_id
+        })
+        create_record_response = requests.post(
+            url="{0}/records/{1}".format(HETZNER_API_ENDPOINT, record_id),
+            headers=self._headers,
+            data=record_data
+        )
+        if create_record_response.status_code == 401:
+            raise _NotAuthorizedException()
+        if create_record_response.status_code == 404:
+            raise _RecordNotFoundException(record_id)
+        if create_record_response.status_code == 422:
+            raise _UnprocessableEntityException(record_data)
+        try:
+            return create_record_response.json()
+        except (ValueError, UnicodeDecodeError) as exception:
+            raise _MalformedResponseException(exception)
+
     def delete_record_by_name(self, domain, record_name):
         """
         Searches for a zone matching ``domain``, if found find and delete a record matching ``record_name`
@@ -114,8 +155,8 @@ class _HetznerClient:
         :raises ._RecordNotFoundException: If no record is found matching ``record_name``
         :raises ._NotAuthorizedException: If Hetzner does not accept the authorization credentials
         """
-        zone_id = self._get_zone_id_by_domain(domain)
-        record_id = self._get_record_id_by_name(zone_id, record_name)
+        zone_id = self.get_zone_id_by_domain(domain)
+        record_id = self.get_record_id_by_name(zone_id, record_name)
         self.delete_record(record_id)
 
     def delete_record(self, record_id):

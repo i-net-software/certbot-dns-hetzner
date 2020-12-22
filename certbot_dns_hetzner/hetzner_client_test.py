@@ -138,3 +138,63 @@ class HetznerClientTest(unittest.TestCase):
                 _ZoneNotFoundException,
                 self.client.delete_record_by_name, FAKE_DOMAIN, FAKE_RECORD_NAME
             )
+
+    def test_update_record(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200, json=FAKE_RECORD_RESPONSE)
+            response = self.client.update_record(FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42)
+            self.assertEqual(response, FAKE_RECORD_RESPONSE)
+
+    def test_update_record_but_zone_is_not_in_account(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITHOUT_DOMAIN)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200, json=FAKE_RECORD_RESPONSE)
+            self.assertRaises(
+                _ZoneNotFoundException,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
+
+    def test_update_record_but_record_creation_not_200(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=406)
+            self.assertRaises(
+                _MalformedResponseException,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
+
+    def test_update_record_but_record_but_unauthorized(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=401)
+            self.assertRaises(
+                _NotAuthorizedException,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
+
+    def test_update_record_but_zone_listing_is_401(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=401)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200)
+            self.assertRaises(
+                _NotAuthorizedException,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
+
+    def test_update_record_but_zone_listing_times_out(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), exc=requests.ConnectTimeout)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200)
+            self.assertRaises(
+                requests.ConnectionError,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
+
+    def test_delete_record_by_name_but_its_not_found(self):
+        with requests_mock.Mocker() as mock:
+            mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=404)
+            self.assertRaises(
+                _RecordNotFoundException,
+                self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
+            )
