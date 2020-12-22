@@ -10,6 +10,7 @@ from certbot.plugins import dns_common
 from certbot_dns_hetzner.hetzner_client import \
     _MalformedResponseException, \
     _HetznerClient, \
+    _RecordNotFoundException, \
     _ZoneNotFoundException, _NotAuthorizedException
 
 TTL = 60
@@ -47,14 +48,37 @@ class Authenticator(dns_common.DNSAuthenticator):
         )
 
     def _perform(self, domain, validation_name, validation):
+        client = self._get_hetzner_client()
+        formated_name = self._fqdn_format(validation_name)
+
         try:
-            self._get_hetzner_client().add_record(
-                domain,
-                "TXT",
-                self._fqdn_format(validation_name),
-                validation,
-                TTL
-            )
+            try:
+                # check if a record exists - and if so update it with the additional value
+                zone_id = client.get_zone_id_by_domain(domain)
+                record_id = client.get_record_id_by_name(zone_id, formated_name)
+                record_value = client.get_record_value_by_name(zone_id, formated_name)
+                
+                client.update_record(
+                    domain,
+                    record_id,
+                    "TXT",
+                    formated_name,
+                    "\n".join([record_value, validation]),
+                    TTL
+                )
+
+            except (
+                _RecordNotFoundException
+            ) as exception:
+                # this is Ok - there is no record yet.
+                
+                client.add_record(
+                    domain,
+                    "TXT",
+                    formated_name,
+                    validation,
+                    TTL
+                )
         except (
                 _ZoneNotFoundException,
                 requests.ConnectionError,
@@ -64,8 +88,30 @@ class Authenticator(dns_common.DNSAuthenticator):
             raise errors.PluginError(exception)
 
     def _cleanup(self, domain, validation_name, validation):
+        client = self._get_hetzner_client()
+        formated_name = self._fqdn_format(validation_name)
+
         try:
-            self._get_hetzner_client().delete_record_by_name(domain, self._fqdn_format(validation_name))
+            # check if a record exists with multiple entries - and if so downgrade it, removeing the current value
+            zone_id = client.get_zone_id_by_domain(domain)
+            record_id = client.get_record_id_by_name(zone_id, formated_name)
+            record_values = client.get_record_value_by_name(zone_id, formated_name).split("\n")
+            
+            if validation in record_values:
+                record_values.remove(validation)
+
+            if len(record_values) <= 1:
+                client.delete_record_by_name(domain, formated_name)
+            else:
+                client.update_record(
+                    domain,
+                    record_id,
+                    "TXT",
+                    formated_name,
+                    "\n".join(record_values),
+                    TTL
+                )
+
         except (requests.ConnectionError, _NotAuthorizedException) as exception:
             raise errors.PluginError(exception)
 
