@@ -63,7 +63,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    " ".join([record_value, validation]),
+                    '"' + '\\n'.join([record_value, validation]) + '"',
                     TTL
                 )
 
@@ -96,7 +96,7 @@ class Authenticator(dns_common.DNSAuthenticator):
 
             try:
                 record_id = client.get_record_id_by_name(zone_id, formated_name)
-                record_values = client.get_record_value_by_name(zone_id, formated_name).split("\n")
+                record_values = client.get_record_value_by_name(zone_id, formated_name).split('\\n')
             except (_RecordNotFoundException) as exception:
                 # this one may be ok ... we do want it removed
                 return
@@ -112,7 +112,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                     record_id,
                     "TXT",
                     formated_name,
-                    " ".join(record_values),
+                    '"' + '\\n'.join(record_values) + '"',
                     TTL
                 )
 
