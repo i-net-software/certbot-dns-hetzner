@@ -26,7 +26,7 @@ class HetznerClientTest(unittest.TestCase):
     def test_get_zone_by_name(self):
         with requests_mock.Mocker() as mock:
             mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
-            zone_id = self.client._get_zone_id_by_domain(FAKE_DOMAIN)
+            zone_id = self.client.get_zone_id_by_domain(FAKE_DOMAIN)
             self.assertEqual(zone_id, FAKE_ZONE_ID)
 
     def test_get_zone_by_name_but_zone_response_is_garbage(self):
@@ -34,7 +34,7 @@ class HetznerClientTest(unittest.TestCase):
             mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, text='garbage')
             self.assertRaises(
                 _MalformedResponseException,
-                self.client._get_zone_id_by_domain, FAKE_DOMAIN
+                self.client.get_zone_id_by_domain, FAKE_DOMAIN
             )
 
     def test_add_record(self):

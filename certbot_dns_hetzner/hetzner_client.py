@@ -80,7 +80,7 @@ class _HetznerClient:
                                                 if it's committed to the wrong zone
         :raises requests.exceptions.ConnectionError: If the API request fails
         """
-        zone_id = self._get_zone_id_by_domain(domain)
+        zone_id = self.get_zone_id_by_domain(domain)
         record_data = json.dumps({
             "value": value,
             "ttl": ttl,
@@ -135,7 +135,27 @@ class _HetznerClient:
         if response.status_code != 200:
             raise _MalformedResponseException('Status code not 200')
 
-    def _get_record_id_by_name(self, zone_id, record_name):
+    def get_record_id_by_name(self, zone_id, record_name):
+        """
+        :param zone_id: ID of dns zone where the record should be searched
+        :param record_name: Name of the record that is searched
+        :return: The ID of the record with name ``record_name`` if found
+        :rtype: str
+        """
+        record = self._get_record_by_name( zone_id, record_name )
+        return record['id']
+
+    def get_record_value_by_name(self, zone_id, record_name):
+        """
+        :param zone_id: ID of dns zone where the record should be searched
+        :param record_name: Name of the record that is searched
+        :return: The value of the record with name ``record_name`` if found
+        :rtype: str
+        """
+        record = self._get_record_by_name( zone_id, record_name )
+        return record['value']
+
+    def _get_record_by_name(self, zone_id, record_name):
         """
         :param zone_id: ID of dns zone where the record should be searched
         :param record_name: Name of the record that is searched
@@ -158,12 +178,12 @@ class _HetznerClient:
             records = records_response.json()['records']
             for record in records:
                 if record['name'] == record_name:
-                    return record['id']
+                    return record
         except (ValueError, UnicodeDecodeError, KeyError) as exception:
             raise _MalformedResponseException(exception)
         raise _RecordNotFoundException(record_name)
 
-    def _get_zone_id_by_domain(self, domain):
+    def get_zone_id_by_domain(self, domain):
         """
         Requests all dns zones from your Hetzner account and searches for a specific one to determine the ID of it
         :param domain: Name of dns zone where the record should be searched
