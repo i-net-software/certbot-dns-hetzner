@@ -104,8 +104,8 @@ class _HetznerClient:
 
     def update_record(self, domain, record_id, record_type, name, value, ttl):  # pylint: disable=too-many-arguments
         """
-        API call to update a record with the id `record_id` in the zone matching ``domain`` to your Hetzner Account, while specifying ``record_type``,
-        ``name``, ``value`` and ``ttl``
+        API call to update a record with the id `record_id` in the zone matching ``domain`` to your Hetzner Account,
+        while specifying ``record_type``, ``name``, ``value`` and ``ttl``
         :param domain: Domain to determine zone where record should be added
         :param record_id: The ID of the the record to update
         :param record_type: A valid DNS record type
@@ -183,7 +183,7 @@ class _HetznerClient:
         :return: The ID of the record with name ``record_name`` if found
         :rtype: str
         """
-        record = self._get_record_by_name( zone_id, record_name )
+        record = self._get_record_by_name(zone_id, record_name)
         return record['id']
 
     def get_record_value_by_name(self, zone_id, record_name):
@@ -193,7 +193,7 @@ class _HetznerClient:
         :return: The value of the record with name ``record_name`` if found
         :rtype: str
         """
-        record = self._get_record_by_name( zone_id, record_name )
+        record = self._get_record_by_name(zone_id, record_name)
         return record['value']
 
     def _get_record_by_name(self, zone_id, record_name):

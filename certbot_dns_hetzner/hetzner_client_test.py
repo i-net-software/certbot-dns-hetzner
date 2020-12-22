@@ -14,7 +14,7 @@ from certbot_dns_hetzner.hetzner_client import HETZNER_API_ENDPOINT, _ZoneNotFou
     _MalformedResponseException, _NotAuthorizedException, _RecordNotFoundException
 
 
-class HetznerClientTest(unittest.TestCase):
+class HetznerClientTest(unittest.TestCase): # pylint: disable=too-many-public-methods
     record_name = 'foo'
     record_content = 'bar'
     record_ttl = 42
@@ -142,14 +142,20 @@ class HetznerClientTest(unittest.TestCase):
     def test_update_record(self):
         with requests_mock.Mocker() as mock:
             mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
-            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200, json=FAKE_RECORD_RESPONSE)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID),
+                      status_code=200,
+                      json=FAKE_RECORD_RESPONSE)
+
             response = self.client.update_record(FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42)
             self.assertEqual(response, FAKE_RECORD_RESPONSE)
 
     def test_update_record_but_zone_is_not_in_account(self):
         with requests_mock.Mocker() as mock:
             mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITHOUT_DOMAIN)
-            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=200, json=FAKE_RECORD_RESPONSE)
+            mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID),
+                      status_code=200,
+                      json=FAKE_RECORD_RESPONSE)
+
             self.assertRaises(
                 _ZoneNotFoundException,
                 self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
@@ -190,7 +196,7 @@ class HetznerClientTest(unittest.TestCase):
                 self.client.update_record, FAKE_DOMAIN, FAKE_RECORD_ID, "TXT", "somename", "somevalue", 42
             )
 
-    def test_delete_record_by_name_but_its_not_found(self):
+    def test_update_record_by_name_but_its_not_found(self):
         with requests_mock.Mocker() as mock:
             mock.get('{0}/zones'.format(HETZNER_API_ENDPOINT), status_code=200, json=FAKE_ZONES_RESPONSE_WITH_DOMAIN)
             mock.post('{0}/records/{1}'.format(HETZNER_API_ENDPOINT, FAKE_RECORD_ID), status_code=404)

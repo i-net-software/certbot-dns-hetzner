@@ -13,7 +13,6 @@ from certbot.tests import util as test_util
 from certbot_dns_hetzner.fakes import FAKE_API_TOKEN, FAKE_RECORD, FAKE_RECORD_NAME, FAKE_RECORD_ID
 from certbot_dns_hetzner.hetzner_client import _ZoneNotFoundException, _RecordNotFoundException
 
-
 class AuthenticatorTest(
         test_util.TempDirTestCase,
         dns_test_common.BaseAuthenticatorTest
@@ -45,10 +44,16 @@ class AuthenticatorTest(
         self.auth._get_hetzner_client = mock.MagicMock(return_value=self.mock_client)
 
     def setup_has_no_records(self):
+        """
+        Set up without any records
+        """
         self.mock_client.get_record_value_by_name.side_effect = _RecordNotFoundException(FAKE_RECORD_NAME)
         self.mock_client.get_record_id_by_name.side_effect = _RecordNotFoundException(FAKE_RECORD_NAME)
 
     def setup_single_records(self):
+        """
+        Set up with a single record
+        """
         self.mock_client.get_record_value_by_name.side_effect = None
         self.mock_client.get_record_value_by_name.return_value = FAKE_RECORD_ID
         self.mock_client.get_record_id_by_name.side_effect = None

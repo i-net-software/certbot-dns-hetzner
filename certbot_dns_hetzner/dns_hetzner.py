@@ -57,7 +57,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 zone_id = client.get_zone_id_by_domain(domain)
                 record_id = client.get_record_id_by_name(zone_id, formated_name)
                 record_value = client.get_record_value_by_name(zone_id, formated_name)
-                
+
                 client.update_record(
                     domain,
                     record_id,
@@ -68,10 +68,10 @@ class Authenticator(dns_common.DNSAuthenticator):
                 )
 
             except (
-                _RecordNotFoundException
+                    _RecordNotFoundException
             ) as exception:
                 # this is Ok - there is no record yet.
-                
+
                 client.add_record(
                     domain,
                     "TXT",
@@ -96,7 +96,7 @@ class Authenticator(dns_common.DNSAuthenticator):
             zone_id = client.get_zone_id_by_domain(domain)
             record_id = client.get_record_id_by_name(zone_id, formated_name)
             record_values = client.get_record_value_by_name(zone_id, formated_name).split("\n")
-            
+
             if validation in record_values:
                 record_values.remove(validation)
 
